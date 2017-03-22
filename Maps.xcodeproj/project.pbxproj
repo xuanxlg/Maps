@@ -12,8 +12,6 @@
 		35783D871E822BB800E09335 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35783D851E822BB800E09335 /* Main.storyboard */; };
 		35783D891E822BB800E09335 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 35783D881E822BB800E09335 /* Assets.xcassets */; };
 		35783D8C1E822BB800E09335 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 35783D8A1E822BB800E09335 /* LaunchScreen.storyboard */; };
-		35783D971E822BB800E09335 /* MapsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35783D961E822BB800E09335 /* MapsTests.swift */; };
-		35783DA21E822BB800E09335 /* MapsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35783DA11E822BB800E09335 /* MapsUITests.swift */; };
 		35783DB01E822D3400E09335 /* MyLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35783DAF1E822D3400E09335 /* MyLocationManager.swift */; };
 		659547E4629D19A8F02391A8 /* libPods-Maps.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0CA1D0EE338544CE54D6D97A /* libPods-Maps.a */; };
 /* End PBXBuildFile section */
@@ -45,11 +43,7 @@
 		35783D8B1E822BB800E09335 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		35783D8D1E822BB800E09335 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		35783D921E822BB800E09335 /* MapsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		35783D961E822BB800E09335 /* MapsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsTests.swift; sourceTree = "<group>"; };
-		35783D981E822BB800E09335 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		35783D9D1E822BB800E09335 /* MapsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		35783DA11E822BB800E09335 /* MapsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsUITests.swift; sourceTree = "<group>"; };
-		35783DA31E822BB800E09335 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		35783DAF1E822D3400E09335 /* MyLocationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyLocationManager.swift; sourceTree = "<group>"; };
 		8E93F8D74F43EC307D8BB60D /* Pods-Maps.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Maps.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Maps/Pods-Maps.debug.xcconfig"; sourceTree = "<group>"; };
 		D4FDBB8988A2162A3CE637FF /* Pods-Maps.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Maps.release.xcconfig"; path = "Pods/Target Support Files/Pods-Maps/Pods-Maps.release.xcconfig"; sourceTree = "<group>"; };
@@ -85,8 +79,6 @@
 			isa = PBXGroup;
 			children = (
 				35783D801E822BB800E09335 /* Maps */,
-				35783D951E822BB800E09335 /* MapsTests */,
-				35783DA01E822BB800E09335 /* MapsUITests */,
 				35783D7F1E822BB800E09335 /* Products */,
 				BA870D2D6D5DC541C3E1CC34 /* Pods */,
 				E61FA3D8477F59B048E0187C /* Frameworks */,
@@ -115,24 +107,6 @@
 				35783D8D1E822BB800E09335 /* Info.plist */,
 			);
 			path = Maps;
-			sourceTree = "<group>";
-		};
-		35783D951E822BB800E09335 /* MapsTests */ = {
-			isa = PBXGroup;
-			children = (
-				35783D961E822BB800E09335 /* MapsTests.swift */,
-				35783D981E822BB800E09335 /* Info.plist */,
-			);
-			path = MapsTests;
-			sourceTree = "<group>";
-		};
-		35783DA01E822BB800E09335 /* MapsUITests */ = {
-			isa = PBXGroup;
-			children = (
-				35783DA11E822BB800E09335 /* MapsUITests.swift */,
-				35783DA31E822BB800E09335 /* Info.plist */,
-			);
-			path = MapsUITests;
 			sourceTree = "<group>";
 		};
 		BA870D2D6D5DC541C3E1CC34 /* Pods */ = {
@@ -350,7 +324,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35783D971E822BB800E09335 /* MapsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,7 +331,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35783DA21E822BB800E09335 /* MapsUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
