@@ -33,7 +33,8 @@ class ViewController: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var distance: UISlider!
     
     @IBOutlet weak var distanceRange: UILabel!
-    @IBOutlet weak var callButton: UIButton!
+    
+    @IBOutlet weak var storeInfo: UIStackView!
     
     @IBOutlet weak var storeNameLabel: UILabel!
     @IBOutlet weak var ratingLabel: UILabel!
@@ -56,8 +57,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
     }
     
     private func showMap() {
-        callButton.isHidden = true
-        callButton.isEnabled = false
         if isGoogleMap {
             self.iOSMap.isHidden = true
             self.googleMap.isHidden = false
@@ -72,7 +71,7 @@ class ViewController: UIViewController, MKMapViewDelegate {
     private func showGoogleMap() {
         clearLabel()
         googleMap.clear()
-        imageView.image = nil
+        hiddenInfo()
         
         tap = true
         myLocationManager.requestLocation(completionHandler: { location in
@@ -96,7 +95,7 @@ class ViewController: UIViewController, MKMapViewDelegate {
         
         clearLabel()
         iOSMap.removeAnnotation(point)
-        imageView.image = nil
+        hiddenInfo()
         clearOverlay()
         
         tap = true
@@ -133,8 +132,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
     }
     
     @IBAction func search(_ sender: Any) {
-        callButton.isHidden = false
-        callButton.isEnabled = true
         if isGoogleMap {
             searchGoogleMap()
         } else {
@@ -147,6 +144,8 @@ class ViewController: UIViewController, MKMapViewDelegate {
         myLocationManager.requestLocation(completionHandler: { location in
             if (self.tap == true) {
                 self.tap = false
+                
+                self.hiddenInfo()
                 
                 let distance = self.distance.value;
                 
@@ -214,16 +213,21 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                         return
                                     }
                                     
-                                    let response = response!
+                                    DispatchQueue.main.async {
+                                        let response = response!
+                                        
+                                        print("Info name: \(getResult["name"] as! String)")
+                                        print("Info phone: \(getResult["phone"] as! String)")
+                                        print("Info photo: \(getResult["photo"] as! String)")
+                                        print("Info distance: \(response.distance)")
+                                        print("Info expectedTravelTime: \(round((response.expectedTravelTime/60.0)*10)/10)")
+                                        print("Info addressLabel: \(self.storeAddressLabel.text)")
+                                        self.storeDistanceLabel.text = "\(response.distance) m"
+                                        self.storeTimeLabel.text = "\(round((response.expectedTravelTime/60.0)*10)/10) mins"
+                                        
+                                        self.storeInfo.isHidden = false
+                                    }
                                     
-                                    print("Info name: \(getResult["name"] as! String)")
-                                    print("Info phone: \(getResult["phone"] as! String)")
-                                    print("Info photo: \(getResult["photo"] as! String)")
-                                    print("Info distance: \(response.distance)")
-                                    print("Info expectedTravelTime: \(round((response.expectedTravelTime/60.0)*10)/10)")
-                                    print("Info addressLabel: \(self.storeAddressLabel.text)")
-                                    self.storeDistanceLabel.text = "\(response.distance) m"
-                                    self.storeTimeLabel.text = "\(round((response.expectedTravelTime/60.0)*10)/10) mins"
                                 })
                                 
                                 Alamofire.request("https://maps.googleapis.com/maps/api/directions/json?origin=\(location.coordinate.latitude),\(location.coordinate.longitude)&destination=\(latitude),\(longitude)&sensor=false&mode=walking").responseJSON(completionHandler: { response in
@@ -459,6 +463,8 @@ class ViewController: UIViewController, MKMapViewDelegate {
             if (self.tap == true) {
                 self.tap = false
                 
+                self.hiddenInfo()
+                
                 print("location.coordinate: (\(location.coordinate.latitude), \(location.coordinate.longitude))")
                 
                 let distance = self.distance.value;
@@ -543,6 +549,8 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                         print("calculateETA response.expectedTravelTime: \(round((response.routes[0].expectedTravelTime/60.0)*10)/10)")
                                         self.storeDistanceLabel.text = "\(response.routes[0].distance) m"
                                         self.storeTimeLabel.text = "\(round((response.routes[0].expectedTravelTime/60.0)*10)/10) mins"
+                                        
+                                        self.storeInfo.isHidden = false
                                         
                                         print("calculateETA response.routes.count: \(response.routes.count)")
                                         for route in response.routes {
@@ -696,6 +704,12 @@ class ViewController: UIViewController, MKMapViewDelegate {
         point.subtitle = "Rating \(storeRating)"
         
         iOSMap.addAnnotation(point);
+    }
+    
+    private func hiddenInfo() {
+        storeInfo.isHidden = true
+        clearLabel()
+        imageView.image = nil
     }
     
     private func clearLabel() {

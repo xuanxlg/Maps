@@ -171,6 +171,7 @@
                                         </subviews>
                                     </stackView>
                                 </subviews>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                             </stackView>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -185,7 +186,6 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="callButton" destination="UsJ-Dh-L5s" id="WrV-9S-cvE"/>
                         <outlet property="distance" destination="SQ8-OD-dSZ" id="gAq-rs-0de"/>
                         <outlet property="distanceRange" destination="GKJ-j1-dlQ" id="NOa-kR-l5n"/>
                         <outlet property="googleMap" destination="apC-mJ-0IF" id="57W-W2-X3T"/>
@@ -195,6 +195,7 @@
                         <outlet property="ratingLabel" destination="Kxs-e5-fgk" id="Eru-mT-WjP"/>
                         <outlet property="storeAddressLabel" destination="pgy-Qv-E89" id="h0S-GV-Xf3"/>
                         <outlet property="storeDistanceLabel" destination="gdY-bf-ohM" id="8X2-zs-YcF"/>
+                        <outlet property="storeInfo" destination="EBN-k4-K8N" id="unu-Jg-fVM"/>
                         <outlet property="storeNameLabel" destination="Gc7-Z2-FMU" id="nIX-Rc-5dq"/>
                         <outlet property="storeRatingLabel" destination="Ti5-S3-ciR" id="z0L-OE-opk"/>
                         <outlet property="storeTimeLabel" destination="pfC-ND-lhi" id="nhT-17-F2x"/>
