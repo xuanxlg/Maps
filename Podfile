@@ -5,4 +5,5 @@ use_frameworks!
 target 'Maps' do
     pod 'GoogleMaps'
     pod 'Alamofire'
+    pod 'SwiftMessages'
 end

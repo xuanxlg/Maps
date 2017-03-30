@@ -5,15 +5,18 @@ PODS:
   - GoogleMaps/Base (2.2.0)
   - GoogleMaps/Maps (2.2.0):
     - GoogleMaps/Base
+  - SwiftMessages (3.3.1)
 
 DEPENDENCIES:
   - Alamofire
   - GoogleMaps
+  - SwiftMessages
 
 SPEC CHECKSUMS:
   Alamofire: dc44b1600b800eb63da6a19039a0083d62a6a62d
   GoogleMaps: 104c418d61ab8a05dff06ed0784c25ea9d37da45
+  SwiftMessages: 31e27e35c2f11b116ad7ec3232b56ca9bd242475
 
-PODFILE CHECKSUM: aeae2742dc55c4b1b8619de49583cb8ce906d4d5
+PODFILE CHECKSUM: c1e053d16d197d1b475fd89aba333cc65f4a547e
 
 COCOAPODS: 1.2.0

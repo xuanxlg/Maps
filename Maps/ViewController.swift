@@ -7,11 +7,12 @@
 //
 
 import UIKit
-import Alamofire
 import MapKit
 import GoogleMaps
+import Alamofire
+import SwiftMessages
 
-class ViewController: UIViewController, MKMapViewDelegate {
+class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
     
     let locationManager = CLLocationManager()
     let myLocationManager = MyLocationManager()
@@ -21,10 +22,15 @@ class ViewController: UIViewController, MKMapViewDelegate {
     var marker = GMSMarker()
     var point:MKPointAnnotation = MKPointAnnotation();
     var tap = false
-    var storeNumber = ""
-    var storePhoto = ""
     var isGoogleMap = false
     
+    var storeName = ""
+    var storeRating = 0.0
+    var storeNumber = ""
+    var storeDistance = 0.0
+    var storeArrivalTime = 0.0
+    var storeAddress = ""
+    var storeImageUrl = ""
     
     @IBOutlet weak var iOSMap: MKMapView!
     @IBOutlet weak var googleMap: GMSMapView!
@@ -33,17 +39,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var distance: UISlider!
     
     @IBOutlet weak var distanceRange: UILabel!
-    
-    @IBOutlet weak var storeInfo: UIStackView!
-    
-    @IBOutlet weak var storeNameLabel: UILabel!
-    @IBOutlet weak var ratingLabel: UILabel!
-    @IBOutlet weak var storeRatingLabel: UILabel!
-    @IBOutlet weak var storeDistanceLabel: UILabel!
-    @IBOutlet weak var storeTimeLabel: UILabel!
-    @IBOutlet weak var storeAddressLabel: UILabel!
-    
-    @IBOutlet weak var imageView: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,20 +53,21 @@ class ViewController: UIViewController, MKMapViewDelegate {
     
     private func showMap() {
         if isGoogleMap {
-            self.iOSMap.isHidden = true
-            self.googleMap.isHidden = false
+            iOSMap.isHidden = true
+            googleMap.isHidden = false
             showGoogleMap()
         } else {
-            self.iOSMap.isHidden = false
-            self.googleMap.isHidden = true
+            iOSMap.isHidden = false
+            googleMap.isHidden = true
             showiOSMap()
         }
     }
     
     private func showGoogleMap() {
+        
         clearLabel()
         googleMap.clear()
-        hiddenInfo()
+        googleMap.delegate = self
         
         tap = true
         myLocationManager.requestLocation(completionHandler: { location in
@@ -91,11 +87,10 @@ class ViewController: UIViewController, MKMapViewDelegate {
     
     private func showiOSMap() {
         
-        self.iOSMap.delegate = self
+        iOSMap.delegate = self
         
         clearLabel()
         iOSMap.removeAnnotation(point)
-        hiddenInfo()
         clearOverlay()
         
         tap = true
@@ -122,7 +117,7 @@ class ViewController: UIViewController, MKMapViewDelegate {
         distanceRange.text = "\(distanceValue)"
     }
     
-    @IBAction func callButton(_ sender: Any) {
+    private func call() {
         if self.storeNumber != "" {
             guard let number = URL(string: "telprompt://" + self.storeNumber) else { return }
             UIApplication.shared.open(number, options: [:], completionHandler: nil)
@@ -145,8 +140,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
             if (self.tap == true) {
                 self.tap = false
                 
-                self.hiddenInfo()
-                
                 let distance = self.distance.value;
                 
                 Alamofire.request("https://food-locator-dot-hpd-io.appspot.com/v1/location_query?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&distance=\(distance)").responseJSON(completionHandler: { response in
@@ -156,7 +149,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
                             
                             DispatchQueue.main.async {
                                 
-                                self.imageView.image = nil
                                 self.clearLabel()
                                 
                                 let randomNum:UInt32 = arc4random_uniform(UInt32(result.count))
@@ -164,21 +156,18 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                 
                                 let latitude = getResult["latitude"] as! Double
                                 let longitude = getResult["longitude"] as! Double
-                                let name = getResult["name"] as! String
-                                let rating = getResult["rating"] as! Double
                                 
-                                self.ratingLabel.text = "Rating"
-                                self.storeNameLabel.text = name
-                                self.storeRatingLabel.text = "\(rating)"
-                                self.storeAddressLabel.text = getResult["address"] as? String
+                                self.storeName = getResult["name"] as! String
+                                self.storeRating = getResult["rating"] as! Double
                                 self.storeNumber = getResult["phone"] as! String
-                                self.storePhoto = getResult["photo"] as! String
+                                self.storeAddress = getResult["address"] as! String
+                                self.storeImageUrl = getResult["photo"] as! String
                                 
                                 self.addGooglePointAnnotation(
                                     latitude: latitude,
                                     longitude: longitude,
-                                    storeName: name,
-                                    storeRating: rating
+                                    storeName: self.storeName,
+                                    storeRating: self.storeRating
                                 );
                                 
                                 let currentLocationPlacemark = MKPlacemark(coordinate: location.coordinate, addressDictionary: nil)
@@ -187,8 +176,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                 let destionationCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
                                 let destionationPlacemark = MKPlacemark(coordinate: destionationCoordinate, addressDictionary: nil)
                                 let destionationMapItem = MKMapItem(placemark: destionationPlacemark)
-                                
-                                self.showPhoto(url: self.storePhoto)
                                 
                                 print("to new Location: (\(destionationCoordinate.latitude),\(destionationCoordinate.longitude))")
                                 
@@ -221,11 +208,11 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                         print("Info photo: \(getResult["photo"] as! String)")
                                         print("Info distance: \(response.distance)")
                                         print("Info expectedTravelTime: \(round((response.expectedTravelTime/60.0)*10)/10)")
-                                        print("Info addressLabel: \(self.storeAddressLabel.text)")
-                                        self.storeDistanceLabel.text = "\(response.distance) m"
-                                        self.storeTimeLabel.text = "\(round((response.expectedTravelTime/60.0)*10)/10) mins"
                                         
-                                        self.storeInfo.isHidden = false
+                                        self.storeDistance = response.distance
+                                        self.storeArrivalTime = round((response.expectedTravelTime/60.0)*10)/10
+                                        
+                                        self.showInfo(url: self.storeImageUrl)
                                     }
                                     
                                 })
@@ -257,36 +244,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                         print("error: \(response.error)")
                                     }
                                 })
-                                
-//                                let pathUrl = URL(string: "https://maps.googleapis.com/maps/api/directions/json?origin=\(location.coordinate.latitude),\(location.coordinate.longitude)&destination=\(latitude),\(longitude)&sensor=false&mode=walking")!
-//                                print("pathUrl: \(pathUrl)")
-//                                
-//                                URLSession.shared.dataTask(with: pathUrl) {
-//                                    (data, response, error) in
-//                                    
-//                                    let mapData = data!
-//                                    
-//                                    if let mapJson = try? JSONSerialization.jsonObject(with: mapData, options: []) as? [String:Any] {
-//                                        if let array = mapJson?["routes"] as? NSArray {
-//                                            if let routes = array[0] as? NSDictionary{
-//                                                if let overview_polyline = routes["overview_polyline"] as? NSDictionary{
-//                                                    if let points = overview_polyline["points"] as? String{
-//                                                        print("points \(points)")
-//                                                        // Use DispatchQueue.main for main thread for handling UI
-//                                                        DispatchQueue.main.async {
-//                                                            // show polyline
-//                                                            let path = GMSPath(fromEncodedPath:points)
-//                                                            let polyline = GMSPolyline(path:path)
-//                                                            polyline.strokeWidth = 5
-//                                                            polyline.strokeColor = UIColor.init(hue: 210/360, saturation: 100/100, brightness: 100/100, alpha: 1)
-//                                                            polyline.map = self.googleMap
-//                                                        }
-//                                                    }
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }.resume()
                             }
 
                         }
@@ -294,164 +251,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
                         print("error: \(response.error)")
                     }
                 })
-                
-//                let session = URLSession.shared
-//
-//                let url = URL(string: "https://food-locator-dot-hpd-io.appspot.com/v1/location_query?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&distance=\(distance)")!
-//
-//                let task = session.dataTask(with: url, completionHandler: {
-//                    (data, response, error) in
-//                    
-//                    print("API download data: \(data?.description)")
-//                    print("API download response: \(response?.description)")
-//                    print("API download fail: \(error)")
-//                    
-//                    if let error = error {
-//                        self.showAlert(title: "Attention", message: "API download fail: \(error)")
-//                        print("API download fail: \(error)")
-//                        return
-//                    }
-//                    
-//                    if (response?.description.contains("status code: 500"))! {
-//                        self.showAlert(title: "Server Error", message: "The server encountered an error and could not complete your request.")
-//                    }
-//                    
-//                    let data = data!
-//                    if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers), let result = jsonObject as? [[String: Any]] {
-//                        
-//                        print("Info result.count: \(result.count)")
-//                        if (result.count == 0) {
-//                            self.showAlert(title: "So sad", message: "There are no foods near you")
-//                            print("No found")
-//                            return
-//                        }
-//                        
-//                        DispatchQueue.main.async {
-//                            
-//                            self.imageView.image = nil
-//                            self.clearLabel()
-//                            
-//                            let randomNum:UInt32 = arc4random_uniform(UInt32(result.count))
-//                            let getResult = result[Int(randomNum)]
-//                            
-//                            let latitude = getResult["latitude"] as! Double
-//                            let longitude = getResult["longitude"] as! Double
-//                            let name = getResult["name"] as! String
-//                            let rating = getResult["rating"] as! Double
-//                            
-//                            self.ratingLabel.text = "Rating"
-//                            self.storeNameLabel.text = name
-//                            self.storeRatingLabel.text = "\(rating)"
-//                            self.storeAddressLabel.text = getResult["address"] as? String
-//                            self.storeNumber = getResult["phone"] as! String
-//                            self.storePhoto = getResult["photo"] as! String
-//                            
-//                            self.addGooglePointAnnotation(
-//                                latitude: latitude,
-//                                longitude: longitude,
-//                                storeName: name,
-//                                storeRating: rating
-//                            );
-//                            
-//                            let currentLocationPlacemark = MKPlacemark(coordinate: location.coordinate, addressDictionary: nil)
-//                            let currentLocationMapItem = MKMapItem(placemark: currentLocationPlacemark)
-//                            
-//                            let destionationCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-//                            let destionationPlacemark = MKPlacemark(coordinate: destionationCoordinate, addressDictionary: nil)
-//                            let destionationMapItem = MKMapItem(placemark: destionationPlacemark)
-//                            
-//                            self.showPhoto(url: self.storePhoto)
-//                            
-//                            //                            let destionationLocationSpan:MKCoordinateSpan = MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005);
-//                            //                            self.map.setRegion(MKCoordinateRegion(center: destionationCoordinate, span: destionationLocationSpan), animated: true);
-//                            print("to new Location: (\(destionationCoordinate.latitude),\(destionationCoordinate.longitude))")
-//                            
-//                            /***
-//                             * Reset camera
-//                             ***/
-//                            //                            let camera = GMSCameraPosition.camera(withLatitude: destionationCoordinate.latitude, longitude: destionationCoordinate.longitude, zoom: Float(self.zoom))
-//                            //                            self.mapView.camera = camera
-//                            
-//                            /***
-//                             * Animate move camera
-//                             ***/
-//                            //                            self.mapView.animate(toLocation: CLLocationCoordinate2DMake(destionationCoordinate.latitude, destionationCoordinate.longitude))
-//                            
-//                            /***
-//                             * Move camera
-//                             ***/
-//                            //                                                    let camera = GMSCameraPosition.camera(withLatitude: destionationCoordinate.latitude,
-//                            //                                                                                          longitude: destionationCoordinate.longitude, zoom: 18)
-//                            //                                                    let update = GMSCameraUpdate.setCamera(camera)
-//                            //                                                    self.mapView.moveCamera(update)
-//                            
-//                            /***
-//                             * Camera for bounds
-//                             ***/
-//                            let current = CLLocationCoordinate2DMake(location.coordinate.latitude, location.coordinate.longitude)
-//                            let target = CLLocationCoordinate2DMake(latitude, longitude)
-//                            let bounds = GMSCoordinateBounds(coordinate: current, coordinate: target)
-//                            let camera = self.googleMap.camera(for: bounds, insets:UIEdgeInsets.zero)
-//                            self.googleMap.camera = camera!
-//                            
-//                            let request = MKDirectionsRequest()
-//                            request.source = currentLocationMapItem
-//                            request.destination = destionationMapItem
-//                            request.transportType = .walking
-//                            
-//                            let directions = MKDirections(request: request)
-//                            directions.calculateETA(completionHandler: {response, error in
-//                                if let error = error {
-//                                    print("calculateETA error: \(error)")
-//                                    return
-//                                }
-//                                
-//                                let response = response!
-//                                
-//                                print("Info name: \(getResult["name"] as! String)")
-//                                print("Info phone: \(getResult["phone"] as! String)")
-//                                print("Info photo: \(getResult["photo"] as! String)")
-//                                print("Info distance: \(response.distance)")
-//                                print("Info expectedTravelTime: \(round((response.expectedTravelTime/60.0)*10)/10)")
-//                                print("Info addressLabel: \(self.storeAddressLabel.text)")
-//                                self.storeDistanceLabel.text = "\(response.distance) m"
-//                                self.storeTimeLabel.text = "\(round((response.expectedTravelTime/60.0)*10)/10) mins"
-//                            })
-//                            
-//                            let pathUrl = URL(string: "https://maps.googleapis.com/maps/api/directions/json?origin=\(location.coordinate.latitude),\(location.coordinate.longitude)&destination=\(latitude),\(longitude)&sensor=false&mode=walking")!
-//                            print("pathUrl: \(pathUrl)")
-//                            
-//                            URLSession.shared.dataTask(with: pathUrl) {
-//                                (data, response, error) in
-//                                
-//                                let mapData = data!
-//                                
-//                                if let mapJson = try? JSONSerialization.jsonObject(with: mapData, options: []) as? [String:Any] {
-//                                    if let array = mapJson?["routes"] as? NSArray {
-//                                        if let routes = array[0] as? NSDictionary{
-//                                            if let overview_polyline = routes["overview_polyline"] as? NSDictionary{
-//                                                if let points = overview_polyline["points"] as? String{
-//                                                    print("points \(points)")
-//                                                    // Use DispatchQueue.main for main thread for handling UI
-//                                                    DispatchQueue.main.async {
-//                                                        // show polyline
-//                                                        let path = GMSPath(fromEncodedPath:points)
-//                                                        let polyline = GMSPolyline(path:path)
-//                                                        polyline.strokeWidth = 5
-//                                                        polyline.strokeColor = UIColor.init(hue: 210/360, saturation: 100/100, brightness: 100/100, alpha: 1)
-//                                                        polyline.map = self.googleMap
-//                                                    }
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                                }.resume()
-//                        }
-//                    }
-//                })
-//                
-//                task.resume()
             }
         })
     }
@@ -462,8 +261,6 @@ class ViewController: UIViewController, MKMapViewDelegate {
             
             if (self.tap == true) {
                 self.tap = false
-                
-                self.hiddenInfo()
                 
                 print("location.coordinate: (\(location.coordinate.latitude), \(location.coordinate.longitude))")
                 
@@ -484,20 +281,17 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                 
                                 let latitude = getResult["latitude"] as! Double
                                 let longitude = getResult["longitude"] as! Double
-                                let name = getResult["name"] as! String
-                                let rating = getResult["rating"] as! Double
+                                
+                                self.storeName = getResult["name"] as! String
+                                self.storeRating = getResult["rating"] as! Double
+                                self.storeNumber = getResult["phone"] as! String
+                                self.storeAddress = getResult["address"] as! String
+                                self.storeImageUrl = getResult["photo"] as! String
                                 
                                 print("calculateETA result.count: \(result.count)")
                                 print("calculateETA getResult.name: \(getResult["name"] as! String)")
                                 print("calculateETA getResult.phone: \(getResult["phone"] as! String)")
                                 print("calculateETA getResult.photo: \(getResult["photo"] as! String)")
-                                
-                                self.ratingLabel.text = "Rating"
-                                self.storeNameLabel.text = name
-                                self.storeRatingLabel.text = "\(rating)"
-                                self.storeAddressLabel.text = getResult["address"] as? String
-                                self.storeNumber = getResult["phone"] as! String
-                                self.storePhoto = getResult["photo"] as! String
                                 
                                 let currentLocationPlacemark = MKPlacemark(coordinate: location.coordinate, addressDictionary: nil)
                                 let currentLocationMapItem = MKMapItem(placemark: currentLocationPlacemark)
@@ -524,11 +318,9 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                 self.addiOSPointAnnotation(
                                     latitude: latitude,
                                     longitude: longitude,
-                                    storeName: name,
-                                    storeRating: rating
+                                    storeName: self.storeName,
+                                    storeRating: self.storeRating
                                 );
-                                
-                                self.showPhoto(url: self.storePhoto)
                                 
                                 let request = MKDirectionsRequest()
                                 request.source = currentLocationMapItem
@@ -547,10 +339,11 @@ class ViewController: UIViewController, MKMapViewDelegate {
                                         let response = response!
                                         print("calculateETA response.distance: \(response.routes[0].distance)")
                                         print("calculateETA response.expectedTravelTime: \(round((response.routes[0].expectedTravelTime/60.0)*10)/10)")
-                                        self.storeDistanceLabel.text = "\(response.routes[0].distance) m"
-                                        self.storeTimeLabel.text = "\(round((response.routes[0].expectedTravelTime/60.0)*10)/10) mins"
                                         
-                                        self.storeInfo.isHidden = false
+                                        self.storeDistance = response.routes[0].distance
+                                        self.storeArrivalTime = round((response.routes[0].expectedTravelTime/60.0)*10)/10
+                                        
+                                        self.showInfo(url: self.storeImageUrl)
                                         
                                         print("calculateETA response.routes.count: \(response.routes.count)")
                                         for route in response.routes {
@@ -566,111 +359,16 @@ class ViewController: UIViewController, MKMapViewDelegate {
                         print("error: \(response.error)")
                     }
                 })
-                
-//                let session = URLSession.shared
-//                let url = URL(string: "https://food-locator-dot-hpd-io.appspot.com/v1/location_query?latitude=\(location.coordinate.latitude)&longitude=\(location.coordinate.longitude)&distance=\(distance)")!
-//                let task = session.dataTask(with: url, completionHandler: {
-//                    (data, response, error) in
-//                    
-//                    if let error = error {
-//                        print("API download fail: \(error)")
-//                        return
-//                    }
-//                    
-//                    let data = data!
-//                    if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers), let result = jsonObject as? [[String: Any]] {
-//                        
-//                        DispatchQueue.main.async {
-//                            
-//                            self.clearLabel()
-//                            self.clearOverlay()
-//                            
-//                            let randomNum:UInt32 = arc4random_uniform(UInt32(result.count))
-//                            let getResult = result[Int(randomNum)]
-//                            
-//                            let latitude = getResult["latitude"] as! Double
-//                            let longitude = getResult["longitude"] as! Double
-//                            let name = getResult["name"] as! String
-//                            let rating = getResult["rating"] as! Double
-//                            
-//                            print("calculateETA result.count: \(result.count)")
-//                            print("calculateETA getResult.name: \(getResult["name"] as! String)")
-//                            print("calculateETA getResult.phone: \(getResult["phone"] as! String)")
-//                            print("calculateETA getResult.photo: \(getResult["photo"] as! String)")
-//                            
-//                            self.ratingLabel.text = "Rating"
-//                            self.storeNameLabel.text = name
-//                            self.storeRatingLabel.text = "\(rating)"
-//                            self.storeAddressLabel.text = getResult["address"] as? String
-//                            self.storeNumber = getResult["phone"] as! String
-//                            self.storePhoto = getResult["photo"] as! String
-//                            
-//                            let currentLocationPlacemark = MKPlacemark(coordinate: location.coordinate, addressDictionary: nil)
-//                            let currentLocationMapItem = MKMapItem(placemark: currentLocationPlacemark)
-//                            
-//                            let destionationCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-//                            let destionationPlacemark = MKPlacemark(coordinate: destionationCoordinate, addressDictionary: nil)
-//                            let destionationMapItem = MKMapItem(placemark: destionationPlacemark)
-//                            
-//                            let centerLatitude = (location.coordinate.latitude + latitude) / 2
-//                            let centerLongitude = (location.coordinate.longitude + longitude) / 2
-//                            let centerCoordinate = CLLocationCoordinate2D(latitude: centerLatitude, longitude: centerLongitude)
-//                            
-//                            let intervalLatitude = abs(location.coordinate.latitude - latitude)
-//                            let intervalLongitude = abs(location.coordinate.longitude - longitude)
-//                            var interval = 0.0
-//                            if (intervalLatitude >= intervalLongitude) {
-//                                interval = intervalLatitude
-//                            } else {
-//                                interval = intervalLongitude
-//                            }
-//                            let coordinateDeltaDegrees = CLLocationDegrees(interval+0.001)
-//                            let destionationLocationSpan:MKCoordinateSpan = MKCoordinateSpan(latitudeDelta: coordinateDeltaDegrees, longitudeDelta: coordinateDeltaDegrees);
-//                            self.iOSMap.setRegion(MKCoordinateRegion(center: centerCoordinate, span: destionationLocationSpan), animated: true);
-//                            self.addiOSPointAnnotation(
-//                                latitude: latitude,
-//                                longitude: longitude,
-//                                storeName: name,
-//                                storeRating: rating
-//                            );
-//                            
-//                            self.showPhoto(url: self.storePhoto)
-//                            
-//                            let request = MKDirectionsRequest()
-//                            request.source = currentLocationMapItem
-//                            request.destination = destionationMapItem
-//                            request.transportType = .walking
-//                            
-//                            let directions = MKDirections(request: request)
-//                            directions.calculate(completionHandler: {response, error in
-//                                if let error = error {
-//                                    print("calculateETA error: \(error)")
-//                                    return
-//                                }
-//                                
-//                                DispatchQueue.main.async {
-//                                    
-//                                    let response = response!
-//                                    print("calculateETA response.distance: \(response.routes[0].distance)")
-//                                    print("calculateETA response.expectedTravelTime: \(round((response.routes[0].expectedTravelTime/60.0)*10)/10)")
-//                                    self.storeDistanceLabel.text = "\(response.routes[0].distance) m"
-//                                    self.storeTimeLabel.text = "\(round((response.routes[0].expectedTravelTime/60.0)*10)/10) mins"
-//                                    
-//                                    print("calculateETA response.routes.count: \(response.routes.count)")
-//                                    for route in response.routes {
-//                                        self.iOSMap.add(route.polyline, level: MKOverlayLevel.aboveRoads)
-//                                    }
-//                                    
-//                                }
-//                                
-//                            })
-//                        }
-//                    }
-//                })
-//                
-//                task.resume()
             }
         })
+    }
+    
+    func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) {
+        showInfo(url: storeImageUrl)
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        showInfo(url: storeImageUrl)
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
@@ -706,26 +404,22 @@ class ViewController: UIViewController, MKMapViewDelegate {
         iOSMap.addAnnotation(point);
     }
     
-    private func hiddenInfo() {
-        storeInfo.isHidden = true
-        clearLabel()
-        imageView.image = nil
-    }
-    
     private func clearLabel() {
-        self.mapMode.setTitle("", for: .normal)
-        self.ratingLabel.text = ""
-        self.storeNameLabel.text = ""
-        self.storeRatingLabel.text = ""
-        self.storeAddressLabel.text = ""
-        self.storeDistanceLabel.text = ""
-        self.storeTimeLabel.text = ""
+        mapMode.setTitle("", for: .normal)
         
         if isGoogleMap {
-            self.mapMode.setTitle("Google Map", for: .normal)
+            mapMode.setTitle("Google Map", for: .normal)
         } else {
-            self.mapMode.setTitle("Apple Map", for: .normal)
+            mapMode.setTitle("Apple Map", for: .normal)
         }
+        
+        storeName = ""
+        storeRating = 0.0
+        storeNumber = ""
+        storeDistance = 0.0
+        storeArrivalTime = 0.0
+        storeAddress = ""
+        storeImageUrl = ""
     }
     
     private func showAlert(title: String, message: String) {
@@ -737,7 +431,8 @@ class ViewController: UIViewController, MKMapViewDelegate {
         self.present(actionSheetController, animated: true, completion: nil)
     }
     
-    private func showPhoto(url: String) {
+    private func showInfo(url: String) {
+        
         if url != "" {
             let catPictureURL = URL(string: "\(url)")!
             // Creating a session object with the default configuration.
@@ -758,7 +453,40 @@ class ViewController: UIViewController, MKMapViewDelegate {
                             // Finally convert that Data into an image and do what you wish with it.
                             //                            self.imageView.image = UIImage(data: imageData)
                             DispatchQueue.main.async {
-                                self.imageView.image = UIImage(data: imageData)
+                                
+                                let view = MessageView.viewFromNib(layout: .CardView)
+                                
+                                view.button?.backgroundColor = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
+                                view.button?.setBackgroundImage(UIImage(named: "call")?.withRenderingMode(.automatic), for: .normal)
+                                view.buttonTapHandler = { _ in self.call()}
+                                
+                                view.configureTheme(.warning)
+                                view.configureDropShadow()
+                                view.configureContent(
+                                    backgroundColor: UIColor(hue: 60/360, saturation: 75/100, brightness: 100/100, alpha: 0.5),
+                                    fontColor: UIColor.white,
+                                    name: self.storeName,
+                                    rating: "\(self.storeRating)",
+                                    distance: "\(self.storeDistance) m",
+                                    arrivalTime: "\(self.storeArrivalTime) mins",
+                                    address: self.storeAddress,
+                                    image: UIImage(data: imageData)!)
+                                
+                                var config = SwiftMessages.Config()
+                                config.presentationStyle = .bottom
+                                config.presentationContext = .window(windowLevel: UIWindowLevelStatusBar)
+                                config.duration = .forever
+                                config.dimMode = .gray(interactive: true)
+                                config.interactiveHide = false
+                                config.preferredStatusBarStyle = .lightContent
+                                
+                                // Specify one or more event listeners to respond to show and hide events.
+                                config.eventListeners.append() { event in
+                                    if case .didHide = event { print("yep") }
+                                }
+                                
+                                SwiftMessages.show(config: config, view: view)
+                                
                             }
                             
                             // Do something with your image.
